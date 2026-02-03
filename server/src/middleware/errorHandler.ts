@@ -1,10 +1,12 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 
 export const errorHandler = (
   err: Error,
   _req: Request,
-  res: Response): void => {
+  res: Response,
+  _next: NextFunction        // <---- THIS WAS MISSING
+): void => {
   console.error('Error:', err);
 
   if (err instanceof ZodError) {
@@ -16,8 +18,9 @@ export const errorHandler = (
   }
 
   res.status(500).json({
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message,
+    error:
+      process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : err.message,
   });
 };
