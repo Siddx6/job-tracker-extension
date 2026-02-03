@@ -58,11 +58,11 @@ export const getJobs = async (req: AuthRequest, res: Response): Promise<void> =>
 
 export const getJobById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { id } = req.params;
 
     const job = await prisma.jobApplication.findFirst({
       where: {
-        id,
+        id: Array.isArray(id) ? id[0] : id,
         userId: req.userId,
       },
       include: {
@@ -106,13 +106,14 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
 
 export const updateJob = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
     const data = updateJobSchema.parse(req.body);
 
     // Check if job belongs to user
     const existingJob = await prisma.jobApplication.findFirst({
       where: {
-        id,
+        id: idString,
         userId: req.userId,
       },
     });
@@ -128,7 +129,7 @@ export const updateJob = async (req: AuthRequest, res: Response): Promise<void> 
     }
 
     const job = await prisma.jobApplication.update({
-      where: { id },
+      where: { id: idString },
       data: updateData,
     });
 
@@ -144,12 +145,13 @@ export const updateJob = async (req: AuthRequest, res: Response): Promise<void> 
 
 export const deleteJob = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id: string = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     // Check if job belongs to user
     const existingJob = await prisma.jobApplication.findFirst({
       where: {
-        id,
+        id: idString,
         userId: req.userId,
       },
     });
@@ -160,7 +162,7 @@ export const deleteJob = async (req: AuthRequest, res: Response): Promise<void> 
     }
 
     await prisma.jobApplication.delete({
-      where: { id },
+      where: { id: idString },
     });
 
     res.status(204).send();

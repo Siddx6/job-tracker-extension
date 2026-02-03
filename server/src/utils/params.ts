@@ -1,0 +1,5 @@
+export function asString(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0];
+  if (!value) return "";
+  return value;
+}

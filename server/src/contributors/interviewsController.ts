@@ -2,8 +2,6 @@ import { Response } from 'express';
 import { z } from 'zod';
 import prisma from '../db/client';
 import { AuthRequest } from '../middleware/auth';
-import { asString } from "../utils/params";
-
 
 const createInterviewSchema = z.object({
   date: z.string().datetime(),
@@ -13,7 +11,7 @@ const createInterviewSchema = z.object({
 
 export const getInterviews = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobId = asString(req.params.jobId);
+    const jobId = Array.isArray(req.params.jobId) ? req.params.jobId[0] : req.params.jobId;
 
     // Check if job belongs to user
     const job = await prisma.jobApplication.findFirst({
@@ -41,7 +39,7 @@ export const getInterviews = async (req: AuthRequest, res: Response): Promise<vo
 
 export const createInterview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobId = asString(req.params.jobId);
+    const jobId = Array.isArray(req.params.jobId) ? req.params.jobId[0] : req.params.jobId;
     const data = createInterviewSchema.parse(req.body);
 
     // Check if job belongs to user
@@ -78,8 +76,8 @@ export const createInterview = async (req: AuthRequest, res: Response): Promise<
 
 export const updateInterview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobId = asString(req.params.jobId);
-    const interviewId = asString(req.params.interviewId);
+    const jobId = Array.isArray(req.params.jobId) ? req.params.jobId[0] : req.params.jobId;
+    const interviewId = Array.isArray(req.params.interviewId) ? req.params.interviewId[0] : req.params.interviewId;
     const data = createInterviewSchema.partial().parse(req.body);
 
     // Check if job belongs to user
@@ -130,8 +128,8 @@ export const updateInterview = async (req: AuthRequest, res: Response): Promise<
 
 export const deleteInterview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobId = asString(req.params.jobId);
-    const interviewId = asString(req.params.interviewId);
+    const jobId = Array.isArray(req.params.jobId) ? req.params.jobId[0] : req.params.jobId;
+    const interviewId = Array.isArray(req.params.interviewId) ? req.params.interviewId[0] : req.params.interviewId;
 
     // Check if job belongs to user
     const job = await prisma.jobApplication.findFirst({
