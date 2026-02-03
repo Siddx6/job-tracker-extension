@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'; // Added explicit imports to fix TS7016
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import jobsRoutes from './routes/jobsRoutes';
@@ -16,11 +16,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- CORS CONFIGURATION ---
-const corsOptions = {
-  origin: [
-    'http://localhost:5173', // For local development
-    'chrome-extension://onccilohmmmbhhgplglibonkhokebjjc' 
-  ],
+const corsOptions: CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // If request has no origin (like mobile/curl) or is from your allowed sources
+    if (!origin || origin.startsWith('chrome-extension://') || origin.includes('localhost')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 };
 
