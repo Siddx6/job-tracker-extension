@@ -7,10 +7,14 @@ export interface TokenPayload {
   email: string;
 }
 
-export const generateToken = (payload: TokenPayload): string => {
+export const generateToken = (payload: any): string => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 };
 
-export const verifyToken = (token: string): TokenPayload => {
-  return jwt.verify(token, JWT_SECRET) as TokenPayload;
+export const verifyToken = (token: string): any => {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
 };

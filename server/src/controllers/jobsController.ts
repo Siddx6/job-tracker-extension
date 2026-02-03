@@ -1,7 +1,14 @@
-import { Response } from 'express';
+import { Request, Response } from 'express'; // Standard Request
 import { z } from 'zod';
 import prisma from '../db/client';
-import { AuthRequest } from '../middleware/auth';
+
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
+  }
+}
 
 const createJobSchema = z.object({
   title: z.string().min(1),
@@ -26,12 +33,13 @@ const updateJobSchema = z.object({
   coverLetterUsed: z.boolean().optional(),
 });
 
-export const getJobs = async (req: AuthRequest, res: Response): Promise<void> => {
+// Use Request instead of AuthRequest
+export const getJobs = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, limit, offset } = req.query;
 
     const where: any = {
-      userId: req.userId,
+      userId: req.userId, // req.userId is now globally recognized
     };
 
     if (status) {
@@ -52,13 +60,18 @@ export const getJobs = async (req: AuthRequest, res: Response): Promise<void> =>
 
     res.json(jobs);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-export const getJobById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getJobById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { id } = req.params; // Standard access to params
+
+    if (typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid job ID' });
+      return;
+    }
 
     const job = await prisma.jobApplication.findFirst({
       where: {
@@ -79,11 +92,11 @@ export const getJobById = async (req: AuthRequest, res: Response): Promise<void>
 
     res.json(job);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-export const createJob = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createJob = async (req: Request, res: Response): Promise<void> => {
   try {
     const data = createJobSchema.parse(req.body);
 
@@ -100,16 +113,21 @@ export const createJob = async (req: AuthRequest, res: Response): Promise<void> 
       res.status(400).json({ error: 'Invalid input', details: error.errors });
       return;
     }
-    throw error;
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-export const updateJob = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateJob = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { id } = req.params;
+    
+    if (typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid job ID' });
+      return;
+    }
+    
     const data = updateJobSchema.parse(req.body);
 
-    // Check if job belongs to user
     const existingJob = await prisma.jobApplication.findFirst({
       where: {
         id,
@@ -138,15 +156,19 @@ export const updateJob = async (req: AuthRequest, res: Response): Promise<void> 
       res.status(400).json({ error: 'Invalid input', details: error.errors });
       return;
     }
-    throw error;
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-export const deleteJob = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteJob = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id: string = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { id } = req.params;
 
-    // Check if job belongs to user
+    if (typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid job ID' });
+      return;
+    }
+
     const existingJob = await prisma.jobApplication.findFirst({
       where: {
         id,
@@ -165,11 +187,11 @@ export const deleteJob = async (req: AuthRequest, res: Response): Promise<void> 
 
     res.status(204).send();
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-export const getJobStats = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getJobStats = async (req: Request, res: Response): Promise<void> => {
   try {
     const jobs = await prisma.jobApplication.findMany({
       where: { userId: req.userId },
@@ -183,7 +205,7 @@ export const getJobStats = async (req: AuthRequest, res: Response): Promise<void
     const total = jobs.length;
     const byStatus: Record<string, number> = {};
     
-    jobs.forEach((job: { status: string; dateAdded: Date; dateApplied: Date | null; }) => {
+    jobs.forEach((job) => {
       byStatus[job.status] = (byStatus[job.status] || 0) + 1;
     });
 
@@ -191,11 +213,10 @@ export const getJobStats = async (req: AuthRequest, res: Response): Promise<void
       ? ((byStatus.interviewing || 0) + (byStatus.offer || 0)) / total 
       : 0;
 
-    // Calculate average time to response
     let totalDays = 0;
     let respondedCount = 0;
     
-    jobs.forEach((job: { status: string; dateAdded: Date; dateApplied: Date | null; }) => {
+    jobs.forEach((job) => {
       if (job.dateApplied && (job.status === 'interviewing' || job.status === 'offer')) {
         const days = Math.floor(
           (new Date().getTime() - job.dateApplied.getTime()) / (1000 * 60 * 60 * 24)
@@ -214,7 +235,6 @@ export const getJobStats = async (req: AuthRequest, res: Response): Promise<void
       averageTimeToResponse: Math.round(averageTimeToResponse),
     });
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-

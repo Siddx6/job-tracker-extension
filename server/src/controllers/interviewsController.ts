@@ -1,9 +1,7 @@
-import { Response } from 'express';
+import { Request, Response } from 'express'; // Standard Request
 import { z } from 'zod';
 import prisma from '../db/client';
-import { AuthRequest } from '../middleware/auth';
 import { asString } from "../utils/params";
-
 
 const createInterviewSchema = z.object({
   date: z.string().datetime(),
@@ -11,7 +9,7 @@ const createInterviewSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const getInterviews = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getInterviews = async (req: Request, res: Response): Promise<void> => {
   try {
     const jobId = asString(req.params.jobId);
 
@@ -19,7 +17,7 @@ export const getInterviews = async (req: AuthRequest, res: Response): Promise<vo
     const job = await prisma.jobApplication.findFirst({
       where: {
         id: jobId,
-        userId: req.userId,
+        userId: req.userId, // This works via global augmentation
       },
     });
 
@@ -35,16 +33,15 @@ export const getInterviews = async (req: AuthRequest, res: Response): Promise<vo
 
     res.json(interviews);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const createInterview = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createInterview = async (req: Request, res: Response): Promise<void> => {
   try {
     const jobId = asString(req.params.jobId);
     const data = createInterviewSchema.parse(req.body);
 
-    // Check if job belongs to user
     const job = await prisma.jobApplication.findFirst({
       where: {
         id: jobId,
@@ -72,17 +69,16 @@ export const createInterview = async (req: AuthRequest, res: Response): Promise<
       res.status(400).json({ error: 'Invalid input', details: error.errors });
       return;
     }
-    throw error;
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const updateInterview = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateInterview = async (req: Request, res: Response): Promise<void> => {
   try {
     const jobId = asString(req.params.jobId);
     const interviewId = asString(req.params.interviewId);
     const data = createInterviewSchema.partial().parse(req.body);
 
-    // Check if job belongs to user
     const job = await prisma.jobApplication.findFirst({
       where: {
         id: jobId,
@@ -95,7 +91,6 @@ export const updateInterview = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    // Check if interview exists for this job
     const existingInterview = await prisma.interview.findFirst({
       where: {
         id: interviewId,
@@ -124,16 +119,15 @@ export const updateInterview = async (req: AuthRequest, res: Response): Promise<
       res.status(400).json({ error: 'Invalid input', details: error.errors });
       return;
     }
-    throw error;
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const deleteInterview = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteInterview = async (req: Request, res: Response): Promise<void> => {
   try {
     const jobId = asString(req.params.jobId);
     const interviewId = asString(req.params.interviewId);
 
-    // Check if job belongs to user
     const job = await prisma.jobApplication.findFirst({
       where: {
         id: jobId,
@@ -146,7 +140,6 @@ export const deleteInterview = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    // Check if interview exists for this job
     const existingInterview = await prisma.interview.findFirst({
       where: {
         id: interviewId,
@@ -165,6 +158,6 @@ export const deleteInterview = async (req: AuthRequest, res: Response): Promise<
 
     res.status(204).send();
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

@@ -1,14 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 
-// Extending the Express Request interface
-export interface AuthRequest extends Request {
-  userId?: string;
-  userEmail?: string;
+// This makes userId and userEmail available on the standard Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      userEmail?: string;
+    }
+  }
 }
 
 export const authenticate = (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void => {
@@ -21,7 +25,6 @@ export const authenticate = (
     }
 
     const token = authHeader.substring(7);
-    // Cast the payload so TS knows what's inside
     const payload = verifyToken(token) as { userId: string; email: string };
 
     req.userId = payload.userId;

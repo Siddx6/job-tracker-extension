@@ -3,7 +3,10 @@ import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import prisma from '../db/client';
 import { generateToken } from '../utils/jwt';
-import { AuthRequest } from '../middleware/auth';
+
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
 const registerSchema = z.object({
   email: z.string().email(),
