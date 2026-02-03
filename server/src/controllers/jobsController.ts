@@ -102,8 +102,18 @@ export const createJob = async (req: Request, res: Response): Promise<void> => {
 
     const job = await prisma.jobApplication.create({
       data: {
-        ...data,
-        userId: req.userId!,
+        title: data.title,
+        company: data.company,
+        location: data.location,
+        salary: data.salary,
+        url: data.url,
+        status: data.status,
+        notes: data.notes,
+        // Use 'connect' if userId is a relation, 
+        // or ensure 'userId' is a plain string field in schema.prisma
+        user: {
+          connect: { id: req.userId } 
+        }
       },
     });
 
