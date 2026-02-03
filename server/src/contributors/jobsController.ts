@@ -217,3 +217,4 @@ export const getJobStats = async (req: AuthRequest, res: Response): Promise<void
     throw error;
   }
 };
+

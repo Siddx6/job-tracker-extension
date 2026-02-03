@@ -7,6 +7,8 @@ import interviewsRoutes from './routes/interviewsRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
+console.log("APP DATABASE URL:", process.env.DATABASE_URL);
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
