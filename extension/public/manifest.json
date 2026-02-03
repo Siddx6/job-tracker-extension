@@ -13,6 +13,7 @@
     "https://www.indeed.com/*",
     "https://www.glassdoor.com/*",
     "https://*.greenhouse.io/*",
+    "https://job-tracker-extension.onrender.com/*",
     "https://*.lever.co/*"
   ],
   "background": {

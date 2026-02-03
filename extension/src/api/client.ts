@@ -10,8 +10,7 @@ import {
   CreateInterviewRequest,
 } from '../../../shared/types';
 
-const API_URL = (typeof window !== 'undefined' && (window as any).__API_URL__) || 'http://localhost:3000/api';
-
+const API_URL = (typeof window !== 'undefined' && (window as any).__API_URL__) || 'https://job-tracker-extension.onrender.com/api';
 class ApiClient {
   private token: string | null = null;
 
