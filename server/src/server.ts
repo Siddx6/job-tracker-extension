@@ -11,8 +11,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// --- CORS CONFIGURATION (Updated) ---
+const corsOptions = {
+  origin: [
+    'http://localhost:5173', // For local development
+    'chrome-extension://onccilohmmmbhhgplglibonkhokebjjc' //
+  ],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+// ------------------------------------
+
 app.use(express.json());
 
 // Routes

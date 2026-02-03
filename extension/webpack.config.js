@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: 'production',
+  devtool: false,
   entry: {
     popup: './src/popup/index.tsx',
     background: './src/background/service-worker.ts',

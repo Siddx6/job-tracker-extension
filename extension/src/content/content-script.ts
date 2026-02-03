@@ -1,3 +1,4 @@
+// --- 1. Types & Interfaces ---
 interface JobDetails {
   title?: string;
   company?: string;
@@ -6,209 +7,181 @@ interface JobDetails {
   url: string;
 }
 
+// --- 2. Helper Functions ---
 function getTextContent(selector: string): string | undefined {
   const element = document.querySelector(selector);
   return element ? element.textContent?.trim() : undefined;
 }
 
-// Job site parsers
+// --- 3. Job Site Parsers ---
 const parsers = {
   linkedin: (): JobDetails => {
-    const title = getTextContent('.job-details-jobs-unified-top-card__job-title') ||
-                  getTextContent('.jobs-unified-top-card__job-title');
-    const company = getTextContent('.job-details-jobs-unified-top-card__company-name') ||
-                    getTextContent('.jobs-unified-top-card__company-name');
-    const location = getTextContent('.job-details-jobs-unified-top-card__bullet') ||
+    // LinkedIn has multiple layouts (Single job view, Collections, Premium)
+    // We try multiple selectors to ensure we catch the data.
+    const title = getTextContent('.job-details-jobs-unified-top-card__job-title') || 
+                  getTextContent('.jobs-unified-top-card__job-title') ||
+                  getTextContent('h1.t-24'); 
+                  
+    const company = getTextContent('.job-details-jobs-unified-top-card__company-name') || 
+                    getTextContent('.jobs-unified-top-card__company-name') ||
+                    getTextContent('.job-details-jobs-unified-top-card__company-name a');
+
+    const location = getTextContent('.job-details-jobs-unified-top-card__bullet') || 
                      getTextContent('.jobs-unified-top-card__bullet');
+                     
     const salary = getTextContent('.job-details-jobs-unified-top-card__job-insight');
 
-    return {
-      title,
-      company,
-      location,
-      salary,
-      url: window.location.href,
-    };
+    return { title, company, location, salary, url: window.location.href };
   },
-
-  indeed: (): JobDetails => {
-    return {
-      title: getTextContent('.jobsearch-JobInfoHeader-title'),
-      company: getTextContent('[data-company-name="true"]'),
-      location: getTextContent('[data-testid="job-location"]'),
-      salary: getTextContent('.js-match-insights-provider-tvvxwd'),
-      url: window.location.href,
-    };
-  },
-
-  glassdoor: (): JobDetails => {
-    return {
-      title: getTextContent('[data-test="job-title"]'),
-      company: getTextContent('[data-test="employer-name"]'),
-      location: getTextContent('[data-test="location"]'),
-      salary: getTextContent('[data-test="detailSalary"]'),
-      url: window.location.href,
-    };
-  },
-
-  greenhouse: (): JobDetails => {
-    return {
-      title: getTextContent('.app-title'),
-      company: getTextContent('.company-name'),
-      location: getTextContent('.location'),
-      url: window.location.href,
-    };
-  },
-
-  lever: (): JobDetails => {
-    return {
-      title: getTextContent('.posting-headline h2'),
-      company: getTextContent('.main-header-text-logo'),
-      location: getTextContent('.posting-categories .location'),
-      url: window.location.href,
-    };
-  },
+  indeed: (): JobDetails => ({
+    title: getTextContent('.jobsearch-JobInfoHeader-title'),
+    company: getTextContent('[data-company-name="true"]'),
+    location: getTextContent('[data-testid="job-location"]'),
+    salary: getTextContent('.js-match-insights-provider-tvvxwd'),
+    url: window.location.href,
+  }),
+  glassdoor: (): JobDetails => ({
+    title: getTextContent('[data-test="job-title"]'),
+    company: getTextContent('[data-test="employer-name"]'),
+    location: getTextContent('[data-test="location"]'),
+    salary: getTextContent('[data-test="detailSalary"]'),
+    url: window.location.href,
+  }),
+  greenhouse: (): JobDetails => ({
+    title: getTextContent('.app-title'),
+    company: getTextContent('.company-name'),
+    location: getTextContent('.location'),
+    url: window.location.href,
+  }),
+  lever: (): JobDetails => ({
+    title: getTextContent('.posting-headline h2'),
+    company: getTextContent('.main-header-text-logo'),
+    location: getTextContent('.posting-categories .location'),
+    url: window.location.href,
+  }),
 };
 
+// --- 4. Site Detection ---
 function detectJobSite(): keyof typeof parsers | null {
-  const hostname = window.location.hostname;
-
-  if (hostname.includes('linkedin.com')) return 'linkedin';
-  if (hostname.includes('indeed.com')) return 'indeed';
-  if (hostname.includes('glassdoor.com')) return 'glassdoor';
-  if (hostname.includes('greenhouse.io')) return 'greenhouse';
-  if (hostname.includes('lever.co')) return 'lever';
-
+  const host = window.location.hostname;
+  if (host.includes('linkedin')) return 'linkedin';
+  if (host.includes('indeed')) return 'indeed';
+  if (host.includes('glassdoor')) return 'glassdoor';
+  if (host.includes('greenhouse')) return 'greenhouse';
+  if (host.includes('lever')) return 'lever';
   return null;
 }
 
 function extractJobDetails(): JobDetails | null {
   const site = detectJobSite();
   if (!site) return null;
-
   return parsers[site]();
 }
 
-function isJobPage(): boolean {
-  const url = window.location.href;
-  const hostname = window.location.hostname;
+// --- 5. UI: Create the Floating Button ---
+function createFloatingButton(job: JobDetails) {
+  const btn = document.createElement('button');
+  btn.id = 'job-tracker-save-btn';
+  btn.textContent = '💼 Save to Tracker';
+  // Store title to detect if the button becomes stale (e.g. user switches jobs)
+  btn.dataset.jobTitle = job.title; 
+  
+  // Cyber/Dark Theme Styling
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 99999;
+    padding: 12px 24px;
+    background: #0f172a;
+    color: white;
+    border: 1px solid #3b82f6;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+  `;
 
-  if (hostname.includes('linkedin.com')) {
-    return url.includes('/jobs/view/');
-  }
-  if (hostname.includes('indeed.com')) {
-    return url.includes('/viewjob');
-  }
-  if (hostname.includes('glassdoor.com')) {
-    return url.includes('/job-listing/');
-  }
-  if (hostname.includes('greenhouse.io')) {
-    return url.includes('/jobs/');
-  }
-  if (hostname.includes('lever.co')) {
-    return url.includes('/jobs/');
-  }
+  // Hover Effects
+  btn.addEventListener('mouseenter', () => {
+    btn.style.transform = 'translateY(-2px)';
+    btn.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1)';
+  });
 
-  return false;
-}
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = 'translateY(0)';
+  });
 
-function removeButton(): void {
-  const existingButton = document.querySelector('#job-tracker-save-btn');
-  if (existingButton) {
-    existingButton.remove();
-  }
-}
+  // Click Handler
+  btn.addEventListener('click', async () => {
+    btn.textContent = '⏳ Saving...';
+    btn.disabled = true;
 
-function injectSaveButton(): void {
-  const site = detectJobSite();
-  if (!site) {
-    removeButton();
-    return;
-  }
+    try {
+      // Re-extract data on click to ensure it's fresh
+      const freshDetails = extractJobDetails(); 
+      const response = await chrome.runtime.sendMessage({
+        action: 'saveJob',
+        data: freshDetails || job,
+      });
 
-  if (!isJobPage()) {
-    removeButton();
-    return;
-  }
-
-  if (document.querySelector('#job-tracker-save-btn')) return;
-
-  setTimeout(() => {
-    const jobDetails = extractJobDetails();
-    if (!jobDetails || !jobDetails.title) {
-      removeButton();
-      return;
-    }
-
-    const button = document.createElement('button');
-    button.id = 'job-tracker-save-btn';
-    button.textContent = '💼 Save to Tracker';
-    button.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 10000;
-      padding: 12px 24px;
-      background: #0066cc;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      transition: all 0.2s;
-    `;
-
-    button.addEventListener('mouseenter', () => {
-      button.style.background = '#0052a3';
-      button.style.transform = 'translateY(-2px)';
-      button.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.2)';
-    });
-
-    button.addEventListener('mouseleave', () => {
-      button.style.background = '#0066cc';
-      button.style.transform = 'translateY(0)';
-      button.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-    });
-
-    button.addEventListener('click', async () => {
-      button.disabled = true;
-      button.textContent = '⏳ Saving...';
-
-      try {
-        const response = await chrome.runtime.sendMessage({
-          action: 'saveJob',
-          data: extractJobDetails(),
-        });
-
-        if (response.success) {
-          button.textContent = '✅ Saved!';
-          button.style.background = '#28a745';
-          setTimeout(() => {
-            button.textContent = '💼 Save to Tracker';
-            button.style.background = '#0066cc';
-            button.disabled = false;
-          }, 2000);
-        } else {
-          throw new Error(response.error);
-        }
-      } catch (error) {
-        button.textContent = '❌ Error';
-        button.style.background = '#dc3545';
-        console.error('Failed to save job:', error);
+      if (response && response.success) {
+        btn.textContent = '✅ Saved!';
+        btn.style.borderColor = '#22c55e'; // Green
         setTimeout(() => {
-          button.textContent = '💼 Save to Tracker';
-          button.style.background = '#0066cc';
-          button.disabled = false;
+            btn.textContent = '💼 Save to Tracker';
+            btn.disabled = false;
+            btn.style.borderColor = '#3b82f6'; // Back to Blue
         }, 2000);
+      } else {
+        throw new Error(response?.error || 'Unknown error');
       }
-    });
+    } catch (err) {
+      console.error(err);
+      btn.textContent = '❌ Error';
+      btn.style.borderColor = '#ef4444'; // Red
+      setTimeout(() => {
+        btn.textContent = '💼 Save to Tracker';
+        btn.disabled = false;
+        btn.style.borderColor = '#3b82f6';
+      }, 2000);
+    }
+  });
 
-    document.body.appendChild(button);
-  }, 500);
+  document.body.appendChild(btn);
 }
 
+// --- 6. Main Logic: Inject or Update Button ---
+function tryInjectButton() {
+  const job = extractJobDetails();
+  
+  // A. If no job data found (not on a job page yet), remove any old button
+  if (!job || !job.title) {
+    const existing = document.getElementById('job-tracker-save-btn');
+    if (existing) existing.remove();
+    return;
+  }
+
+  // B. Check if button already exists
+  const existingBtn = document.getElementById('job-tracker-save-btn');
+  
+  if (existingBtn) {
+    // CRITICAL: If button exists but titles don't match, it's stale. Replace it.
+    if (existingBtn.dataset.jobTitle !== job.title) {
+        existingBtn.remove();
+        createFloatingButton(job); 
+    }
+    return;
+  }
+
+  // C. Create fresh button
+  createFloatingButton(job);
+}
+
+// --- 7. Message Listener (For Popup) ---
+// Allows the popup to request job details manually if needed
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'extractJob') {
     const jobDetails = extractJobDetails();
@@ -217,52 +190,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
-let lastUrl = window.location.href;
-
-function checkForNavigation(): void {
-  const currentUrl = window.location.href;
-  if (currentUrl !== lastUrl) {
-    lastUrl = currentUrl;
-    console.log('🎯 Navigation detected:', currentUrl);
-    removeButton();
-    setTimeout(() => {
-      injectSaveButton();
-    }, 1000);
-  }
-}
-
-const originalPushState = history.pushState.bind(history);
-const originalReplaceState = history.replaceState.bind(history);
-
-history.pushState = function(data: any, unused: string, url?: string | URL | null) {
-  originalPushState(data, unused, url);
-  checkForNavigation();
-};
-
-history.replaceState = function(data: any, unused: string, url?: string | URL | null) {
-  originalReplaceState(data, unused, url);
-  checkForNavigation();
-};
-
-window.addEventListener('popstate', checkForNavigation);
-
+// --- 8. Mutation Observer (Automatic Detection) ---
+// This watches for page changes (like clicking a new job in the sidebar)
+let debounceTimer: any;
 const observer = new MutationObserver(() => {
-  checkForNavigation();
+  if (debounceTimer) clearTimeout(debounceTimer);
+  
+  // Wait 500ms after the DOM stops changing to inject the button
+  debounceTimer = setTimeout(() => {
+    tryInjectButton();
+  }, 500);
 });
 
+// Start observing the page body
 observer.observe(document.body, {
   childList: true,
-  subtree: true,
+  subtree: true
 });
 
-setInterval(checkForNavigation, 2000);
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(injectSaveButton, 1000);
-  });
-} else {
-  setTimeout(injectSaveButton, 1000);
-}
-
-console.log('🎯 Job Tracker: Content script loaded');
+// --- 9. Initial Run ---
+// Run once immediately in case the page is already loaded
+tryInjectButton();

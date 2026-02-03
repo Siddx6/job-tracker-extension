@@ -61,7 +61,7 @@ class ApiClient {
   }
 
   // Auth
-  async register(data: RegisterRequest): Promise<AuthResponse> {
+  async register(email: string, password: string, data: RegisterRequest): Promise<AuthResponse> {
     const response = await this.request<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -70,7 +70,7 @@ class ApiClient {
     return response;
   }
 
-  async login(data: LoginRequest): Promise<AuthResponse> {
+  async login(email: string, password: string, data: LoginRequest): Promise<AuthResponse> {
     const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),

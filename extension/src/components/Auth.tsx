@@ -5,15 +5,12 @@ interface AuthProps {
   onLogin: () => void;
 }
 
-type AuthMode = 'login' | 'register';
-
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,12 +18,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      if (mode === 'login') {
-        await apiClient.login({ email, password });
+      if (isLogin) {
+        await apiClient.login(email, password, { email, password });
       } else {
-        await apiClient.register({ email, password, name });
+        await apiClient.register(email, password, {
+          email, password,
+          name: ''
+        });
       }
-      onLogin();
+      onLogin(); 
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -36,76 +36,75 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   return (
     <div className="auth-container">
-      <h2>💼 Job Tracker</h2>
-      <p>Track your job applications with ease</p>
-
-      <div className="auth-tabs">
-        <button
-          className={mode === 'login' ? 'active' : ''}
-          onClick={() => {
-            setMode('login');
-            setError('');
-          }}
-        >
-          Login
-        </button>
-        <button
-          className={mode === 'register' ? 'active' : ''}
-          onClick={() => {
-            setMode('register');
-            setError('');
-          }}
-        >
-          Register
-        </button>
+      {/* Header Section */}
+      <div className="auth-header">
+        <div className="logo-icon">💼</div>
+        <h1>Job Tracker</h1>
+        <p className="subtitle">
+          {isLogin ? 'Welcome back, Hunter!' : 'Start your journey here.'}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="auth-form">
-        {mode === 'register' && (
-          <div className="form-group">
-            <label htmlFor="name">Name</label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="John Doe"
-            />
-          </div>
-        )}
+      {/* The Tab Switcher */}
+      <div className="auth-tabs-wrapper">
+        <div className="auth-tabs">
+          <button 
+            className={`tab-btn ${isLogin ? 'active' : ''}`} 
+            onClick={() => setIsLogin(true)}
+          >
+            Login
+          </button>
+          <button 
+            className={`tab-btn ${!isLogin ? 'active' : ''}`} 
+            onClick={() => setIsLogin(false)}
+          >
+            Register
+          </button>
+        </div>
+      </div>
 
+      {/* Error Message */}
+      {error && <div className="error-banner">⚠️ {error}</div>}
+
+      {/* The Form */}
+      <form className="auth-form" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label>Email Address</label>
           <input
-            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
             required
-            placeholder="you@example.com"
           />
         </div>
-
+        
         <div className="form-group">
-          <label htmlFor="password">Password</label>
+          <label>Password</label>
           <input
-            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
             placeholder="••••••••"
             minLength={6}
+            required
           />
         </div>
 
-        {error && <div className="error-message">{error}</div>}
-
         <button type="submit" className="submit-btn" disabled={isLoading}>
-          {isLoading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Register'}
+          {isLoading ? <div className="spinner-small"></div> : (isLogin ? 'Sign In' : 'Create Account')}
         </button>
       </form>
+      
+      {/* Footer / Hint */}
+      <div className="auth-footer">
+        <p>
+          {isLogin ? "Don't have an account?" : "Already have an account?"}
+          <span onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? ' Sign Up' : ' Login'}
+          </span>
+        </p>
+      </div>
     </div>
   );
 };
