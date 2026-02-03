@@ -11,7 +11,7 @@ interface AuthRequest extends Request {
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  name: z.string().min(1),
+  name: z.string().min(1).optional(),
 });
 
 const loginSchema = z.object({
@@ -41,7 +41,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       data: {
         email,
         password: hashedPassword,
-        name,
+        name: name || email.split('@')[0],
       },
     });
 
