@@ -4,7 +4,7 @@ import {
   createInterview,
   updateInterview,
   deleteInterview,
-} from '../contributors/interviewsController';
+} from '../controllers/interviewsController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();

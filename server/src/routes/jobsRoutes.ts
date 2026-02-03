@@ -6,7 +6,7 @@ import {
   updateJob,
   deleteJob,
   getJobStats,
-} from '../contributors/jobsController';
+} from '../controllers/jobsController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
