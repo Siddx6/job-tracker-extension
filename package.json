@@ -1,0 +1,30 @@
+{
+  "name": "job-tracker",
+  "version": "1.0.0",
+  "description": "Full stack job application tracker with Chrome extension",
+  "private": true,
+  "workspaces": [
+    "server",
+    "extension",
+    "shared"
+  ],
+  "scripts": {
+    "setup": "./setup.sh",
+    "dev:server": "cd server && npm run dev",
+    "dev:extension": "cd extension && npm run dev",
+    "build:extension": "cd extension && npm run build",
+    "prisma:generate": "cd server && npm run prisma:generate",
+    "prisma:migrate": "cd server && npm run migrate",
+    "prisma:studio": "cd server && npm run prisma:studio"
+  },
+  "keywords": [
+    "job-tracker",
+    "chrome-extension",
+    "typescript",
+    "react",
+    "nodejs",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "MIT"
+}
