@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes';
-import jobsRoutes from './routes/jobsRoutes';
-import interviewsRoutes from './routes/interviewsRoutes';
-import { errorHandler } from './middleware/errorHandler';
+import authRoutes from '../routes/authRoutes';
+import jobsRoutes from '../routes/jobsRoutes';
+import interviewsRoutes from '../routes/interviewsRoutes';
+import { errorHandler } from './errorHandler';
 
 dotenv.config();
 
