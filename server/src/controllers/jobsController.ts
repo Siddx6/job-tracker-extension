@@ -215,7 +215,7 @@ export const getJobStats = async (req: Request, res: Response): Promise<void> =>
     const total = jobs.length;
     const byStatus: Record<string, number> = {};
     
-    jobs.forEach((job) => {
+    jobs.forEach((job: { status: string | number; }) => {
       byStatus[job.status] = (byStatus[job.status] || 0) + 1;
     });
 
@@ -226,7 +226,7 @@ export const getJobStats = async (req: Request, res: Response): Promise<void> =>
     let totalDays = 0;
     let respondedCount = 0;
     
-    jobs.forEach((job) => {
+    jobs.forEach((job: { dateApplied: { getTime: () => number; }; status: string; }) => {
       if (job.dateApplied && (job.status === 'interviewing' || job.status === 'offer')) {
         const days = Math.floor(
           (new Date().getTime() - job.dateApplied.getTime()) / (1000 * 60 * 60 * 24)
