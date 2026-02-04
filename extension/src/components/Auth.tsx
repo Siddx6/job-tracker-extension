@@ -16,23 +16,25 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
-      if (isLogin) {
-        await apiClient.login(email, password, { email, password });
-      } else {
-        await apiClient.register(email, password, {
-          email, password,
-          name: ''
-        });
-      }
-      onLogin(); 
+        if (isLogin) {
+            // FIX: Pass only the single expected object
+            await apiClient.login({ email, password }); 
+        } else {
+            // FIX: Pass only the single expected object
+            await apiClient.register({
+                email,
+                password,
+                name: '' // Or whatever field your backend requires
+            });
+        }
+        onLogin();
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+        setError(err.message || 'Authentication failed');
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   return (
     <div className="auth-container">
