@@ -190,39 +190,36 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
-// --- 8. Mutation Observer (LinkedIn SPA Fix) ---
+// --- 8. Mutation Observer (Broadened for LinkedIn SPA) ---
 let debounceTimer: number | undefined;
-const observer = new MutationObserver((mutations) => {
-    // Look specifically for changes inside the LinkedIn job details view
-    const isJobDetailMutation = mutations.some(m => 
-        m.target instanceof HTMLElement && (
-            m.target.classList?.contains('jobs-search__job-details') ||
-            m.target.closest?.('.jobs-search__job-details')
-        )
-    );
 
-    if (isJobDetailMutation || mutations.length > 20) {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            console.log('DOM change detected, re-injecting button...');
-            tryInjectButton();
-        }, 400); 
-    }
+const observer = new MutationObserver(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    
+    debounceTimer = window.setTimeout(() => {
+        // We log this to verify it's working in the console
+        console.log('DOM changed, checking for job details...');
+        tryInjectButton();
+    }, 500);
 });
 
-// Observe the main container specifically to catch "silent" content swaps
-const mainContent = document.querySelector('main') || document.body;
-observer.observe(mainContent, {
+// Observe the entire body but keep it efficient with a debounce
+observer.observe(document.body, {
     childList: true,
     subtree: true
 });
 
-// --- 9. Navigation Listener (The Refresh-Killer) ---
-// This triggers when the URL changes without a page reload
-window.addEventListener('popstate', () => {
-    console.log('URL change detected, re-injecting...');
-    setTimeout(tryInjectButton, 500);
+// --- 9. Navigation & URL Change Detection ---
+let lastUrl = location.href;
+const urlObserver = new MutationObserver(() => {
+    if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        console.log('URL change detected, re-injecting...');
+        setTimeout(tryInjectButton, 500);
+    }
 });
 
-// Initial run for the first page load
+urlObserver.observe(document.querySelector('title')!, { subtree: true, characterData: true, childList: true });
+
+// Initial run
 tryInjectButton();
