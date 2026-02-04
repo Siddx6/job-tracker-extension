@@ -193,7 +193,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // --- 8. Mutation Observer (LinkedIn SPA Fix) ---
 let debounceTimer: number | undefined;
 const observer = new MutationObserver((mutations) => {
-    // Check if any change happened inside the job details view
+    // Look specifically for changes inside the LinkedIn job details view
     const isJobDetailMutation = mutations.some(m => 
         m.target instanceof HTMLElement && (
             m.target.classList?.contains('jobs-search__job-details') ||
@@ -204,25 +204,25 @@ const observer = new MutationObserver((mutations) => {
     if (isJobDetailMutation || mutations.length > 20) {
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            console.log('DOM change detected, trying to inject button...');
+            console.log('DOM change detected, re-injecting button...');
             tryInjectButton();
         }, 400); 
     }
 });
 
-// Observe the main container for job changes
+// Observe the main container specifically to catch "silent" content swaps
 const mainContent = document.querySelector('main') || document.body;
 observer.observe(mainContent, {
     childList: true,
     subtree: true
 });
 
-// --- 9. Navigation & Initial Run ---
-// Listen for URL changes when clicking jobs in the sidebar
+// --- 9. Navigation Listener (The Refresh-Killer) ---
+// This triggers when the URL changes without a page reload
 window.addEventListener('popstate', () => {
-    console.log('URL changed, re-injecting...');
+    console.log('URL change detected, re-injecting...');
     setTimeout(tryInjectButton, 500);
 });
 
-// Run once immediately
+// Initial run for the first page load
 tryInjectButton();
