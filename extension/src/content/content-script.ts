@@ -190,24 +190,39 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
-// --- 8. Mutation Observer (Automatic Detection) ---
-// This watches for page changes (like clicking a new job in the sidebar)
-let debounceTimer: any;
-const observer = new MutationObserver(() => {
-  if (debounceTimer) clearTimeout(debounceTimer);
-  
-  // Wait 500ms after the DOM stops changing to inject the button
-  debounceTimer = setTimeout(() => {
-    tryInjectButton();
-  }, 500);
+// --- 8. Mutation Observer (LinkedIn SPA Fix) ---
+let debounceTimer: number | undefined;
+const observer = new MutationObserver((mutations) => {
+    // Check if any change happened inside the job details view
+    const isJobDetailMutation = mutations.some(m => 
+        m.target instanceof HTMLElement && (
+            m.target.classList?.contains('jobs-search__job-details') ||
+            m.target.closest?.('.jobs-search__job-details')
+        )
+    );
+
+    if (isJobDetailMutation || mutations.length > 20) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            console.log('DOM change detected, trying to inject button...');
+            tryInjectButton();
+        }, 400); 
+    }
 });
 
-// Start observing the page body
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
+// Observe the main container for job changes
+const mainContent = document.querySelector('main') || document.body;
+observer.observe(mainContent, {
+    childList: true,
+    subtree: true
 });
 
-// --- 9. Initial Run ---
-// Run once immediately in case the page is already loaded
+// --- 9. Navigation & Initial Run ---
+// Listen for URL changes when clicking jobs in the sidebar
+window.addEventListener('popstate', () => {
+    console.log('URL changed, re-injecting...');
+    setTimeout(tryInjectButton, 500);
+});
+
+// Run once immediately
 tryInjectButton();
