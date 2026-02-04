@@ -80,7 +80,7 @@ export interface CreateJobRequest {
   location?: string;
   salary?: string;
   url: string;
-  status?: ApplicationStatus;
+  status?: ApplicationStatus | string;
   notes?: string;
 }
 

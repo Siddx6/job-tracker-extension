@@ -1,5 +1,5 @@
-import express, { Request, Response } from 'express';
-import cors, { CorsOptions } from 'cors';
+import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import jobsRoutes from './routes/jobsRoutes';
@@ -11,34 +11,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- CORS CONFIGURATION ---
-// Supports local dev and ANY chrome extension (needed for your ZIP distribution)
-const corsOptions: CorsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || origin.startsWith('chrome-extension://') || origin.includes('localhost')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-};
+// CORS Configuration - Allow Chrome Extension
+app.use(cors({
+  origin: true, // Allow all origins (including chrome-extension://)
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json());
 
-// --- ROUTES ---
-
-// Health check
-app.get('/health', (_req: Request, res: Response) => {
+// Routes
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobsRoutes);
-
-// Separate prefix to avoid route shadowing
-app.use('/api/interviews', interviewsRoutes); 
+app.use('/api/jobs', interviewsRoutes);
 
 // Error handling
 app.use(errorHandler);

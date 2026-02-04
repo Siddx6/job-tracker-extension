@@ -59,25 +59,24 @@ class ApiClient {
     return response.json();
   }
 
-  // Auth
-  async register(email: string, password: string, data: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    await this.setToken(response.token);
-    return response;
-  }
+// Auth
+async register(data: RegisterRequest): Promise<AuthResponse> {
+  const response = await this.request<AuthResponse>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  await this.setToken(response.token);
+  return response;
+}
 
-  async login(email: string, password: string, data: LoginRequest): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    await this.setToken(response.token);
-    return response;
-  }
-
+async login(data: LoginRequest): Promise<AuthResponse> {
+  const response = await this.request<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  await this.setToken(response.token);
+  return response;
+}
   async logout(): Promise<void> {
     await this.clearToken();
   }
